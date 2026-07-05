@@ -1,4 +1,4 @@
-// 1. 地點資料庫
+地點資料庫
 const locations = [
     { id: '312157127015193', lat: 22.2060828, lng: 114.0314316, name: "長洲" },
     { id: '285205046611365', lat: 22.279163, lng: 114.1808013, name: "灣仔" },
@@ -7,6 +7,7 @@ const locations = [
 
 // 2. 初始化變數
 let currentLoc = locations[0];
+let isGuessed = false; // 遊戲鎖定開關
 
 // 3. 初始化 Mapillary
 const mly = new mapillary.Viewer({
@@ -19,34 +20,54 @@ const mly = new mapillary.Viewer({
 const map = L.map('map').setView([22.3193, 114.1694], 11);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-// 5. 距離計算公式
+// 5. 距離計算公式 (Haversine Formula)
 function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
-    const R = 6371;
-    const dLat = (lat2 - lat1) * (Math.PI/180);
-    const dLon = (lon2 - lon1) * (Math.PI/180);
-    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-              Math.cos(lat1 * (Math.PI/180)) * Math.cos(lat2 * (Math.PI/180)) * Math.sin(dLon/2) * Math.sin(dLon/2);
-    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    const R = 6371; // 地球半徑 (km)
+    const dLat = (lat2 - lat1) * (Math.PI / 180);
+    const dLon = (lon2 - lon1) * (Math.PI / 180);
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+              Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-// 6. 切換地點功能
+// 6. 切換地點功能 (按下"下一關"時觸發)
 function nextLocation() {
+    isGuessed = false; // 重置鎖定狀態
+    
+    // 隨機選一個新地點
     const randomIndex = Math.floor(Math.random() * locations.length);
     currentLoc = locations[randomIndex];
+    
+    // 更新 Mapillary
     mly.moveTo(currentLoc.id);
-    map.eachLayer((layer) => { if (layer instanceof L.Marker) map.removeLayer(layer); });
+    
+    // 清除地圖上的所有標記
+    map.eachLayer((layer) => { 
+        if (layer instanceof L.Marker) map.removeLayer(layer); 
+    });
 }
 
-// 7. 點擊地圖猜測
+// 7. 點擊地圖猜測功能
 map.on('click', function(e) {
+    // 如果已經猜過了，禁止再次點擊
+    if (isGuessed) return;
+    
+    isGuessed = true; // 鎖定遊戲
+    
     const userLat = e.latlng.lat;
     const userLng = e.latlng.lng;
+    
+    // 計算距離
     const distance = getDistanceFromLatLonInKm(currentLoc.lat, currentLoc.lng, userLat, userLng);
     
-    // 玩家猜測標記
+    // 顯示玩家猜測標記
     L.marker([userLat, userLng]).addTo(map).bindPopup("你的猜測").openPopup();
     
-    // 正確位置標記 (綠色)
+    // 顯示正確位置標記 (綠色)
+    L.icon({ 
+        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png', 
+        iconSize: [25, 41] 
+    });
     L.marker([currentLoc.lat, currentLoc.lng], {
         icon: L.icon({ 
             iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png', 
@@ -54,5 +75,6 @@ map.on('click', function(e) {
         })
     }).addTo(map).bindPopup("正確位置: " + currentLoc.name).openPopup();
     
+    // 彈出距離結果
     alert("距離目標: " + distance.toFixed(2) + " 公里");
 });
