@@ -5,13 +5,15 @@
     <link href="https://unpkg.com/mapillary-js@4.1.2/dist/mapillary.css" rel="stylesheet" />
 </head>
 <body>
-    <div id="mly" style="width: 100%; height: 50vh;"></div>
-    <div id="map" style="width: 100%; height: 50vh;"></div>
+    <button onclick="nextLocation()" style="width: 100%; height: 50px; font-size: 20px; z-index: 1000; position: relative;">
+        開始/下一關
+    </button>
+    
+    <div id="mly" style="width: 100%; height: 45vh;"></div>
+    <div id="map" style="width: 100%; height: 45vh;"></div>
+    
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/mapillary-js@4.1.2/dist/mapillary.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
-<button onclick="nextLocation()" style="width: 100%; height: 50px; font-size: 20px;">
-    開始/下一關
-</button>
